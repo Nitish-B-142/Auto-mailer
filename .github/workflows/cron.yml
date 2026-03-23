@@ -28,6 +28,7 @@ jobs:
           INST_PASS: ${{ secrets.INST_PASS }}
           PERS_EMAIL: ${{ secrets.PERS_EMAIL }}
           PERS_PASS: ${{ secrets.PERS_PASS }}
+          SHEET_CSV_URL: ${{ secrets.SHEET_CSV_URL }}
         run: python email_automation.py
 
       - name: Commit Updated Database
