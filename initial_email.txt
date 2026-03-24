@@ -1,0 +1,6 @@
+Dear Prof. {name},
+
+I am a student very interested in your research on {topic}. I would like to inquire about potential internship opportunities in your lab.
+
+Best regards,
+[Your Name]

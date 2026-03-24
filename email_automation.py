@@ -27,6 +27,8 @@ PERS_PASS = os.environ.get('PERS_PASS')
 SHEET_CSV_URL = os.environ.get('SHEET_CSV_URL')
 
 DB_FILE = 'tracking.db'
+INITIAL_TEMPLATE = 'initial_email.txt'
+FOLLOWUP_TEMPLATE = 'followup_email.txt'
 MAX_RETRIES = 3
 RETRY_DELAY = 5 # seconds
 
@@ -54,6 +56,22 @@ def fetch_csv_with_retry(url):
             if attempt < MAX_RETRIES - 1:
                 time.sleep(RETRY_DELAY)
     return None
+
+def load_template(file_path, default_text, **kwargs):
+    """Loads a template file and formats it with provided kwargs."""
+    content = default_text
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            logger.error(f"Error reading template {file_path}: {e}")
+    
+    try:
+        return content.format(**kwargs)
+    except Exception as e:
+        logger.error(f"Error formatting template {file_path}: {e}")
+        return content
 
 def send_email(sender_email, sender_pass, recipient_email, cc_email, subject, body_text):
     if not sender_email or not sender_pass:
@@ -146,7 +164,8 @@ def main():
             if not record:
                 # Initial Email
                 subject = f"Inquiry regarding Internship Opportunities - {topic}"
-                body = f"Dear Prof. {name or 'Researcher'},\n\nI am a student very interested in your research on {topic}. I would like to inquire about potential internship opportunities in your lab.\n\nBest regards,\n[Your Name]"
+                default_body = "Dear Prof. {name},\n\nI am a student very interested in your research on {topic}. I would like to inquire about potential internship opportunities in your lab.\n\nBest regards,\n[Your Name]"
+                body = load_template(INITIAL_TEMPLATE, default_body, name=name or 'Researcher', topic=topic)
                 
                 logger.info(f"Sending Initial Mail to {email}...")
                 if send_email(INST_EMAIL, INST_PASS, email, PERS_EMAIL, subject, body):
@@ -171,7 +190,8 @@ def main():
 
                     if reminder_count <= 3:
                         subject = f"Gentle Follow-up: Internship Opportunities - {topic}"
-                        body = f"Dear Prof. {name or 'Researcher'},\n\nI am writing to gently follow up on my previous email regarding research opportunities in {topic}. I remain very interested in your work.\n\nBest regards,\n[Your Name]"
+                        default_body = "Dear Prof. {name},\n\nI am writing to gently follow up on my previous email regarding research opportunities in {topic}. I remain very interested in your work.\n\nBest regards,\n[Your Name]"
+                        body = load_template(FOLLOWUP_TEMPLATE, default_body, name=name or 'Researcher', topic=topic)
                         
                         logger.info(f"Sending Reminder #{reminder_count} to {email}...")
                         if send_email(PERS_EMAIL, PERS_PASS, email, None, subject, body):
